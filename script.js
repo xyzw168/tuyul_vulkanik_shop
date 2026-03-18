@@ -5,6 +5,7 @@
  */
 
 let score = 0;
+let quizScore = 0;
 let gameActive = false;
 let gameLoop;
 let isDiscountApplied = false;
@@ -18,7 +19,51 @@ document.addEventListener('DOMContentLoaded', () => {
     setupWhatsAppOrdering(); 
     setupGameControls();
 });
+function startQuiz() {
+    quizScore = 0; // Reset skor setiap mulai baru
+    document.getElementById('game-menu').style.display = 'none';
+    document.getElementById('quiz-window').style.display = 'block';
+    loadQuestion(0);
+}
+function loadQuestion(index) {
+    // 1. Cek jika soal sudah habis
+    if (index >= quizData.length) {
+        alert("🔥 TOTAL SKOR QUIZ: " + quizScore);
+        
+        if (quizScore >= 90) { // Syarat lulus misal minimal skor 70
+            alert("Selamat! Kamu lulus ujian TuyOul. Diskon Aktif!");
+            applyDiscount();
+            showWin();
+        } else {
+            alert("Skor kamu kurang dari 90. Coba lagi ya!");
+            backToMenu();
+        }
+        return;
+    }
 
+    const data = quizData[index];
+    document.getElementById('quiz-question').innerText = `Pertanyaan ${index + 1}: ${data.q}`;
+    const optionsDiv = document.getElementById('quiz-options');
+    optionsDiv.innerHTML = '';
+    
+    data.a.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        btn.innerText = opt;
+        btn.onclick = () => {
+            if (i === data.correct) {
+                // Skor otomatis: 100 dibagi total soal (100/10 = 10 poin per soal)
+                quizScore += (100 / quizData.length); 
+                loadQuestion(index + 1);
+            } else { 
+                alert("Salah! Jawaban yang benar adalah: " + data.a[data.correct]);
+                alert("Skor Akhir: " + quizScore);
+                backToMenu(); 
+            }
+        };
+        optionsDiv.appendChild(btn);
+    });
+}
 // --- 1. NAVIGASI & VISUAL ---
 function smoothScrollNavigation() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -426,27 +471,27 @@ function startFlappyLogic() {
 // --- LOGIKA TUYOUL QUIZ ---
 const quizData = [
     { 
-        q: "Semua TuyOul suka abu vulkanik. Sebagian penghuni kawah bukan TuyOul. Kesimpulannya?", 
+        q: "Semua TuyOul suka abu vulkanik. Sebagian penghuni kawah bukan TuyOul. Kesimpulan yang paling tepat adalah...", 
         a: [
             "Semua penghuni kawah suka abu vulkanik", 
             "Sebagian penghuni kawah suka abu vulkanik", 
-            "Ada penghuni kawah yang bukan TuyOul dan suka abu vulkanik"
+            "Ada penghuni kawah yang bukan TuyOul"
         ], 
-        correct: 1 // Jawaban paling logis: Sebagian
+        correct: 2 // Fokus pada subjek yang disebutkan di premis kedua
     },
     { 
-        q: "Jika stok TuyOul melimpah, maka harga diskon. Saat ini harga tidak diskon. Maka...", 
+        q: "Jika stok TuyOul melimpah, maka harga diskon. Saat ini harga tidak diskon. Kesimpulannya adalah...", 
         a: [
             "Stok TuyOul tidak melimpah", 
             "Stok TuyOul sangat banyak", 
             "Pembeli tidak mau beli"
         ], 
-        correct: 0 // Modus Tollens
+        correct: 0 // Modus Tollens: Jika P maka Q, ~Q maka ~P
     },
     { 
-        q: "Pola Bilangan: 2, 4, 7, 12, 19, ... Berapakah angka selanjutnya?", 
-        a: ["28", "30", "31"], 
-        correct: 1 // Pola: +2, +3, +5, +7, +11 (Bilangan Prima)
+        q: "Pola Bilangan: 2, 4, 7, 11, 16, ... Berapakah angka selanjutnya?", 
+        a: ["28", "22", "26"], 
+        correct: 1 // Pola penambahan : +2, +3, +4, +5, +6
     },
     { 
         q: "Semua produk Vulkanik awet. Botol ini adalah produk Vulkanik. Jadi...", 
@@ -455,7 +500,50 @@ const quizData = [
             "Botol ini pasti awet", 
             "Semua botol awet"
         ], 
-        correct: 1 
+        correct: 1 // Silogisme kategorik standar
+    },
+    { 
+        q: "Jika TuyOul rajin belajar, maka ia pintar. Jika TuyOul pintar, maka ia menang kuis. Kesimpulannya?", 
+        a: [
+            "Jika TuyOul rajin belajar, maka ia menang kuis", 
+            "TuyOul menang kuis karena rajin", 
+            "Hanya TuyOul pintar yang rajin belajar"
+        ], 
+        correct: 0 // Silogisme hipotetik (P->Q, Q->R, maka P->R)
+    },
+    { 
+        q: "Pola Huruf: B, D, G, K, ... Huruf apakah selanjutnya?", 
+        a: ["N", "O", "P"], 
+        group: "Penalaran Analitik",
+        correct: 2 // Loncat: +1 huruf (C), +2 huruf (E,F), +3 huruf (H,I,J), +4 huruf (L,M,N,O) -> P
+    },
+    { 
+        q: "Lima TuyOul (A, B, C, D, E) antre koin. A di depan B. C di belakang D. E tepat di depan A. Siapa yang paling depan?", 
+        a: ["E", "A", "D"], 
+        correct: 0 // Urutan: E - A - B. D dan C tidak memengaruhi posisi E.
+    },
+    { 
+        q: "Sebagian TuyOul memakai topi. Semua yang memakai topi terlihat keren. Maka...", 
+        a: [
+            "Semua TuyOul terlihat keren", 
+            "Sebagian TuyOul terlihat keren", 
+            "TuyOul yang tidak memakai topi tidak keren"
+        ], 
+        correct: 1 // Sebagian + Semua = Sebagian
+    },
+    { 
+        q: "Pola Bilangan: 100, 95, 85, 70, 50, ... Berapakah angka selanjutnya?", 
+        a: ["25", "30", "20"], 
+        correct: 0 // Pola pengurangan: -5, -10, -15, -20, -25
+    },
+    { 
+        q: "Jika hari ini hujan, TuyOul berteduh di kawah. Hari ini TuyOul tidak berteduh di kawah. Maka...", 
+        a: [
+            "Hari ini cerah", 
+            "Hari ini tidak hujan", 
+            "Kawah sedang penuh"
+        ], 
+        correct: 1 // Modus Tollens: Menyangkal akibat berarti menyangkal sebab.
     }
 ];
 
