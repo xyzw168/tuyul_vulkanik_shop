@@ -49,30 +49,67 @@ function selectGame(mode) {
     
     document.getElementById('game-menu').style.display = 'none';
     document.getElementById('game-window').style.display = 'block';
+    // TAMBAHKAN INI: Pastikan jendela quiz tertutup saat masuk ke mode game visual
+    document.getElementById('quiz-window').style.display = 'none'; 
     
     const jumpBtn = document.getElementById('virtual-jump-btn');
     const player = document.getElementById('player');
 
+    // Reset posisi dan class agar tidak terbawa dari mode sebelumnya
+    player.style.top = ""; 
+    player.style.bottom = "10px";
+
     if(mode === 'runner') {
-        // SOLUSI: Menggunakan gambar asli & menambahkan class khusus runner
-        player.innerHTML = '<img src="maskot-tuyul.png" class="tuyul-sprite">';
+        player.innerHTML = '<img src="maskot-tuyul.png" class="tuyul-run">'; 
         player.className = 'player-runner';
         player.style.left = "50px"; 
-        if(jumpBtn) jumpBtn.style.display = 'inline-block'; 
-    } else {
-        player.innerHTML = '🌋';
+        if(jumpBtn) { 
+            jumpBtn.style.display = 'inline-block'; 
+            jumpBtn.innerText = "JUMP!"; 
+        }
+    } else if(mode === 'flappy') {
+        player.innerHTML = '🦇'; 
+        player.className = 'player-flappy';
+        player.style.left = "80px";
+        player.style.top = "200px"; 
+        if(jumpBtn) { 
+            jumpBtn.style.display = 'inline-block'; 
+            jumpBtn.innerText = "FLY!"; 
+        }
+    } else { // Mode Coin
+        player.innerHTML = '💰';
         player.className = 'player-coin';
         player.style.left = "50%";
         if(jumpBtn) jumpBtn.style.display = 'none';
     }
 }
-
+// --- SISTEM NAVIGASI BALIK KE MENU ---
 function backToMenu() {
+    // 1. Matikan status game dan hentikan semua loop/timer
     gameActive = false;
     clearTimeout(gameLoop);
-    document.querySelectorAll('.coin, .obstacle, .bomb').forEach(el => el.remove());
-    document.getElementById('game-menu').style.display = 'block';
+    
+    // 2. Bersihkan semua objek game yang masih ada di layar (koin, api, pipa, bom)
+    document.querySelectorAll('.coin, .obstacle, .pipe, .bomb').forEach(el => el.remove());
+    
+    // 3. Reset tampilan visual Player ke posisi aman
+    const player = document.getElementById('player');
+    player.className = ''; 
+    player.style.top = ""; 
+    player.style.bottom = "10px";
+    
+    // 4. Sembunyikan jendela Game dan jendela Quiz
     document.getElementById('game-window').style.display = 'none';
+    document.getElementById('quiz-window').style.display = 'none';
+    
+    // 5. Munculkan kembali Menu Utama
+    document.getElementById('game-menu').style.display = 'block';
+    
+    // 6. Reset skor biar gak numpuk ke game berikutnya
+    score = 0;
+    document.getElementById('score').innerText = "Skor: 0";
+    
+    console.log("Kembali ke Menu Utama - Sistem Reset.");
 }
 
 function startAction() {
@@ -82,12 +119,15 @@ function startAction() {
     document.getElementById('score').innerText = "Skor: 0";
     document.getElementById('voucher-popup').style.display = 'none';
     
-    document.querySelectorAll('.coin, .obstacle').forEach(el => el.remove());
+    // Bersihkan sisa objek game lama
+    document.querySelectorAll('.coin, .obstacle, .pipe').forEach(el => el.remove());
 
     if(selectedMode === 'coin') {
         spawnCoin();
-    } else {
+    } else if(selectedMode === 'runner') {
         spawnObstacle();
+    } else if(selectedMode === 'flappy') {
+        startFlappyLogic(); // Panggil fungsi khusus flappy
     }
 }
 
@@ -236,14 +276,20 @@ function setupGameControls() {
 }
 
 function doJump() {
-    if (!gameActive || selectedMode !== 'runner') return;
+    if (!gameActive) return;
     const player = document.getElementById('player');
-    if (!player.classList.contains("jump-animation")) {
-        player.classList.add("jump-animation");
-        setTimeout(() => player.classList.remove("jump-animation"), 500);
+
+    if (selectedMode === 'runner') {
+        if (!player.classList.contains("jump-animation")) {
+            player.classList.add("jump-animation");
+            setTimeout(() => player.classList.remove("jump-animation"), 500);
+        }
+    } else if (selectedMode === 'flappy') {
+        let top = parseInt(player.style.top) || 200;
+        // Loncat ke atas 60px
+        player.style.top = Math.max(0, top - 60) + 'px';
     }
 }
-
 function showWin() {
     gameActive = false;
     clearTimeout(gameLoop);
@@ -297,4 +343,154 @@ function setupWhatsAppOrdering() {
             window.open(`https://wa.me/6281804554719?text=${pesan}`, '_blank');
         }
     });
+}
+// --- LOGIKA TUYOUL FLAPPY ---
+function spawnPipe() {
+    if (!gameActive || selectedMode !== 'flappy') return;
+
+    const board = document.getElementById('game-board');
+    const gap = 150; // Celah pipa
+    const pipeWidth = 50;
+    const minPipeHeight = 50;
+    const pipeHeight = Math.random() * (board.offsetHeight - gap - (2 * minPipeHeight)) + minPipeHeight;
+
+    // Pipa Atas
+    const pipeTop = document.createElement('div');
+    pipeTop.className = 'pipe';
+    pipeTop.style.height = pipeHeight + 'px';
+    pipeTop.style.top = '0';
+    pipeTop.style.left = board.offsetWidth + 'px';
+    board.appendChild(pipeTop);
+
+    // Pipa Bawah
+    const pipeBottom = document.createElement('div');
+    pipeBottom.className = 'pipe';
+    pipeBottom.style.height = (board.offsetHeight - pipeHeight - gap) + 'px';
+    pipeBottom.style.bottom = '0';
+    pipeBottom.style.left = board.offsetWidth + 'px';
+    board.appendChild(pipeBottom);
+
+    let pipeMove = setInterval(() => {
+        if (!gameActive) { clearInterval(pipeMove); pipeTop.remove(); pipeBottom.remove(); return; }
+        
+        let x = parseInt(pipeTop.style.left);
+        x -= 4;
+        pipeTop.style.left = x + 'px';
+        pipeBottom.style.left = x + 'px';
+
+        // Hitbox Collision
+        const player = document.getElementById('player');
+        const pRect = player.getBoundingClientRect();
+        const tRect = pipeTop.getBoundingClientRect();
+        const bRect = pipeBottom.getBoundingClientRect();
+
+        if (
+            (pRect.right > tRect.left && pRect.left < tRect.right && pRect.top < tRect.bottom) ||
+            (pRect.right > bRect.left && pRect.left < bRect.right && pRect.bottom > bRect.top)
+        ) {
+            gameOver("TuyOul nabrak pipa lava!");
+            clearInterval(pipeMove);
+        }
+
+        if (x < -50) {
+            score += 5; // Poin flappy lebih kecil per pipa
+            document.getElementById('score').innerText = "Skor: " + score;
+            if(score >= 50) showWin(); // Skor 50 aja udah susah di flappy
+            clearInterval(pipeMove);
+            pipeTop.remove();
+            pipeBottom.remove();
+        }
+    }, 20);
+
+    gameLoop = setTimeout(spawnPipe, 1500);
+}
+function startFlappyLogic() {
+    const player = document.getElementById('player');
+    
+    // Jalankan gravitasi
+    let gravity = setInterval(() => {
+        if(!gameActive || selectedMode !== 'flappy') { clearInterval(gravity); return; }
+        
+        let top = parseInt(player.style.top) || 200;
+        player.style.top = (top + 4) + 'px'; // TuyOul jatuh perlahan
+        
+        // Batas bawah kawah
+        if(top > 370) {
+            gameOver("TuyOul jatuh ke lava!");
+            clearInterval(gravity);
+        }
+    }, 25);
+
+    spawnPipe();
+}
+// --- LOGIKA TUYOUL QUIZ ---
+const quizData = [
+    { 
+        q: "Semua TuyOul suka abu vulkanik. Sebagian penghuni kawah bukan TuyOul. Kesimpulannya?", 
+        a: [
+            "Semua penghuni kawah suka abu vulkanik", 
+            "Sebagian penghuni kawah suka abu vulkanik", 
+            "Ada penghuni kawah yang bukan TuyOul dan suka abu vulkanik"
+        ], 
+        correct: 1 // Jawaban paling logis: Sebagian
+    },
+    { 
+        q: "Jika stok TuyOul melimpah, maka harga diskon. Saat ini harga tidak diskon. Maka...", 
+        a: [
+            "Stok TuyOul tidak melimpah", 
+            "Stok TuyOul sangat banyak", 
+            "Pembeli tidak mau beli"
+        ], 
+        correct: 0 // Modus Tollens
+    },
+    { 
+        q: "Pola Bilangan: 2, 4, 7, 12, 19, ... Berapakah angka selanjutnya?", 
+        a: ["28", "30", "31"], 
+        correct: 1 // Pola: +2, +3, +5, +7, +11 (Bilangan Prima)
+    },
+    { 
+        q: "Semua produk Vulkanik awet. Botol ini adalah produk Vulkanik. Jadi...", 
+        a: [
+            "Botol ini mungkin awet", 
+            "Botol ini pasti awet", 
+            "Semua botol awet"
+        ], 
+        correct: 1 
+    }
+];
+
+function startQuiz() {
+    document.getElementById('game-menu').style.display = 'none';
+    document.getElementById('quiz-window').style.display = 'block';
+    loadQuestion(0);
+}
+
+function loadQuestion(index) {
+    if (index >= quizData.length) {
+        alert("Selamat! Kamu jenius. Ini diskon buat kamu!");
+        showWin();
+        return;
+    }
+    const data = quizData[index];
+    document.getElementById('quiz-question').innerText = data.q;
+    const optionsDiv = document.getElementById('quiz-options');
+    optionsDiv.innerHTML = '';
+    
+    data.a.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        btn.innerText = opt;
+        btn.onclick = () => {
+            if (i === data.correct) loadQuestion(index + 1);
+            else { alert("Salah! Belajar lagi ya."); backToMenu(); }
+        };
+        optionsDiv.appendChild(btn);
+    });
+}
+
+// Fungsi bantu Game Over
+function gameOver(msg) {
+    gameActive = false;
+    alert(msg);
+    backToMenu();
 }
