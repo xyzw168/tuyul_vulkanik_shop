@@ -52,19 +52,22 @@ function selectGame(mode) {
     document.getElementById('game-window').style.display = 'block';
     document.getElementById('voucher-popup').style.display = 'none';
     
+    const jumpBtn = document.getElementById('virtual-jump-btn');
     const player = document.getElementById('player');
     
+    // Reset Player Position
+    player.style.left = "50%";
+    player.style.bottom = "10px";
+
     if(mode === 'runner') {
-        player.innerHTML = '<img src="maskot-tuyul.png" style="width:50px; height:auto;">';
+        player.innerHTML = '🏃'; 
         player.className = 'player-runner';
         player.style.left = "50px";
-        player.style.bottom = "10px";
-        player.style.top = "auto";
+        if(jumpBtn) jumpBtn.style.display = 'inline-block'; 
     } else {
         player.innerHTML = '🌋';
         player.className = 'player-coin';
-        player.style.left = "50%";
-        player.style.bottom = "10px";
+        if(jumpBtn) jumpBtn.style.display = 'none';
     }
 }
 
@@ -83,7 +86,6 @@ function startAction() {
     document.getElementById('score').innerText = "Skor: 0";
     document.getElementById('voucher-popup').style.display = 'none';
     
-    // Hapus objek lama
     document.querySelectorAll('.coin, .obstacle').forEach(el => el.remove());
 
     if(selectedMode === 'coin') {
@@ -93,29 +95,44 @@ function startAction() {
     }
 }
 
-// --- 3. LOGIKA GAME KOIN ---
+// --- 3. LOGIKA GAME KOIN (DIREVISI: LEBIH SULIT) ---
 function spawnCoin() {
     if (!gameActive || selectedMode !== 'coin') return;
     
     const board = document.getElementById('game-board');
     const coin = document.createElement('div');
     coin.className = 'coin';
-    coin.innerHTML = '💰';
+    
+    // 20% Muncul Bom untuk mempersulit game
+    const isBomb = Math.random() < 0.2;
+    coin.innerHTML = isBomb ? '💣' : '💰';
+    
     coin.style.left = Math.random() * (board.offsetWidth - 40) + 'px';
     coin.style.top = '-40px';
     board.appendChild(coin);
+
+    // Speed meningkat seiring skor
+    let fallSpeed = 5 + (score / 25); 
 
     let fall = setInterval(() => {
         if (!gameActive) { clearInterval(fall); coin.remove(); return; }
         
         let top = parseInt(coin.style.top);
         const player = document.getElementById('player');
+        
+        // Deteksi Tangkap (Menggunakan posisi relatif yang lebih akurat)
         const pLeft = player.offsetLeft;
         const cLeft = coin.offsetLeft;
 
-        // Deteksi Tangkap
-        if (top > 340 && top < 380 && cLeft >= pLeft - 30 && cLeft <= pLeft + 50) {
-            score += 10;
+        if (top > 330 && top < 380 && Math.abs(cLeft - pLeft) < 45) {
+            if(isBomb) {
+                score = Math.max(0, score - 20);
+                board.classList.add('shake-effect');
+                setTimeout(() => board.classList.remove('shake-effect'), 300);
+            } else {
+                score += 10;
+            }
+            
             document.getElementById('score').innerText = "Skor: " + score;
             if(score >= 100) showWin();
             clearInterval(fall);
@@ -124,11 +141,12 @@ function spawnCoin() {
             clearInterval(fall);
             coin.remove();
         } else {
-            coin.style.top = (top + 6) + 'px';
+            coin.style.top = (top + fallSpeed) + 'px';
         }
     }, 20);
 
-    gameLoop = setTimeout(spawnCoin, Math.max(400, 1000 - score * 2));
+    // Delay spawn makin cepat
+    gameLoop = setTimeout(spawnCoin, Math.max(300, 900 - score * 5));
 }
 
 // --- 4. LOGIKA GAME RUNNER ---
@@ -151,7 +169,6 @@ function spawnObstacle() {
         const player = document.getElementById('player');
         let pBottom = parseInt(window.getComputedStyle(player).getPropertyValue("bottom"));
         
-        // Deteksi Tabrakan
         if (pos < 90 && pos > 40 && pBottom < 50) {
             gameActive = false;
             alert("Yah! TuyOul-mu kena api. Skor akhir: " + score);
@@ -169,42 +186,66 @@ function spawnObstacle() {
         }
     }, 20);
 
-    gameLoop = setTimeout(spawnObstacle, Math.random() * (2000 - 1000) + 1000);
+    gameLoop = setTimeout(spawnObstacle, Math.random() * (1800 - 800) + 800);
 }
 
-// --- 5. KONTROL INPUT (KEYBOARD & TOUCH) ---
+// --- 5. KONTROL INPUT (MOUSE, TOUCH, KEYBOARD) ---
 function setupGameControls() {
-    // Gerakan Keyboard
-    window.addEventListener("keydown", (e) => {
-        if(!gameActive) return;
+    const board = document.getElementById('game-board');
+
+    // 1. Kontrol Geser (Mouse & Touch) - KHUSUS KOIN
+    const moveHandler = (e) => {
+        if (!gameActive || selectedMode !== 'coin') return;
+        const rect = board.getBoundingClientRect();
+        let x = (e.type === 'touchmove') ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
         const player = document.getElementById('player');
         
-        // Loncat (Runner)
-        if (e.code === "Space" && selectedMode === 'runner') {
-            if (!player.classList.contains("jump-animation")) {
-                player.classList.add("jump-animation");
-                setTimeout(() => player.classList.remove("jump-animation"), 500);
-            }
+        if (x > 25 && x < rect.width - 25) {
+            player.style.left = (x - 25) + 'px'; // Center player to cursor
         }
-        // Geser (Coin)
+    };
+
+    board.addEventListener('mousemove', moveHandler);
+    board.addEventListener('touchmove', moveHandler, { passive: false });
+
+    // 2. Tombol Loncat Virtual (Muncul di Game Runner)
+    if (!document.getElementById('virtual-jump-btn')) {
+        const jumpBtn = document.createElement('button');
+        jumpBtn.id = 'virtual-jump-btn';
+        jumpBtn.innerText = 'JUMP!';
+        jumpBtn.style.display = 'none';
+        // Cari container kontrol (biasanya di bawah game board)
+        const controlContainer = document.querySelector('.game-controls') || board.parentNode;
+        controlContainer.appendChild(jumpBtn);
+        
+        jumpBtn.addEventListener('click', doJump);
+        jumpBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            doJump();
+        });
+    }
+
+    // 3. Kontrol Keyboard
+    window.addEventListener("keydown", (e) => {
+        if(!gameActive) return;
+        if (e.code === "Space") doJump();
+        
         if (selectedMode === 'coin') {
+            const player = document.getElementById('player');
             let left = player.offsetLeft;
             if(e.key === "ArrowLeft" && left > 20) player.style.left = (left - 30) + "px";
             if(e.key === "ArrowRight" && left < 330) player.style.left = (left + 30) + "px";
         }
     });
+}
 
-    // Tap Layar (HP)
-    document.getElementById('game-board').addEventListener('touchstart', (e) => {
-        if(!gameActive) return;
-        if(selectedMode === 'runner') {
-            const player = document.getElementById('player');
-            if (!player.classList.contains("jump-animation")) {
-                player.classList.add("jump-animation");
-                setTimeout(() => player.classList.remove("jump-animation"), 500);
-            }
-        }
-    });
+function doJump() {
+    if (!gameActive || selectedMode !== 'runner') return;
+    const player = document.getElementById('player');
+    if (!player.classList.contains("jump-animation")) {
+        player.classList.add("jump-animation");
+        setTimeout(() => player.classList.remove("jump-animation"), 500);
+    }
 }
 
 function showWin() {
