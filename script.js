@@ -47,26 +47,22 @@ function selectGame(mode) {
     gameActive = false;
     clearTimeout(gameLoop);
     
-    // UI Switch
     document.getElementById('game-menu').style.display = 'none';
     document.getElementById('game-window').style.display = 'block';
-    document.getElementById('voucher-popup').style.display = 'none';
     
     const jumpBtn = document.getElementById('virtual-jump-btn');
     const player = document.getElementById('player');
-    
-    // Reset Player Position
-    player.style.left = "50%";
-    player.style.bottom = "10px";
 
     if(mode === 'runner') {
-        player.innerHTML = '🏃'; 
+        // SOLUSI: Menggunakan gambar asli & menambahkan class khusus runner
+        player.innerHTML = '<img src="maskot-tuyul.png" class="tuyul-sprite">';
         player.className = 'player-runner';
-        player.style.left = "50px";
+        player.style.left = "50px"; 
         if(jumpBtn) jumpBtn.style.display = 'inline-block'; 
     } else {
         player.innerHTML = '🌋';
         player.className = 'player-coin';
+        player.style.left = "50%";
         if(jumpBtn) jumpBtn.style.display = 'none';
     }
 }
