@@ -158,27 +158,36 @@
         </div>
     </section>
 
-    <section id="game-section" class="game-container">
-        <div class="container">
-            <h2>🎮 MINI GAME: KOIN VULKANIK</h2>
-            <p class="game-desc">Bantu TuyOul kumpulkan koin! Capai 100 poin untuk Diskon 50% Seluruh Produk.</p>
-            
-            <div id="game-board" style="position: relative;">
+<section id="game-section" class="game-container">
+    <div class="container">
+        <h2>🎮 VULKANIK ARCADE</h2>
+        
+        <div id="game-menu" class="game-menu">
+            <p>Pilih Tantanganmu untuk Diskon 50%:</p>
+            <div class="menu-buttons">
+                <button onclick="selectGame('coin')" class="btn btn-primary">💰 KOIN TUYooUL</button>
+                <button onclick="selectGame('runner')" class="btn btn-primary">🏃 TUYooUL RUNNER</button>
+            </div>
+        </div>
+
+        <div id="game-window" style="display:none;">
+            <div id="game-board">
                 <div id="player">🌋</div>
                 <div id="score">Skor: 0</div>
                 
-                <div id="voucher-popup" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background: #ff5722; padding:30px; border-radius:15px; z-index:100; border:4px solid gold; text-align:center;">
-                    <h3 style="color:white; margin-bottom:10px;">🎉 DISKON TERBUKA!</h3>
-                    <p style="color:white; margin-bottom:20px;">Klaim sekarang untuk memotong harga koleksi tuyOul.</p>
-                    <button onclick="applyDiscount()" class="btn btn-primary" style="background:white; color:#ff5722;">KLAIM 50%</button>
+                <div id="voucher-popup" class="popup-style">
+                    <h3>🎉 DISKON TERBUKA!</h3>
+                    <button onclick="applyDiscount()" class="btn btn-primary">KLAIM 50%</button>
                 </div>
             </div>
             
-            <div class="game-controls" style="margin-top: 20px;">
-                <button onclick="startGame()" class="btn btn-primary" id="start-btn">MULAI BERMAIN</button>
+            <div class="game-controls">
+                <button onclick="startAction()" class="btn btn-primary" id="start-btn">MULAI</button>
+                <button onclick="backToMenu()" class="btn btn-secondary">GANTI GAME</button>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
     <section id="tentang" class="about">
         <div class="container">
