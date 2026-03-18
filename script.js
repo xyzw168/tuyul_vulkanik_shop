@@ -151,6 +151,7 @@ function spawnCoin() {
     gameLoop = setTimeout(spawnCoin, Math.max(400, 800 - (score/5)));
 }
 
+// --- PERBAIKAN RUNNER (HITBOX LEBIH ADIL) ---
 function spawnObstacle() {
     if (!gameActive || selectedMode !== 'runner') return;
     const board = document.getElementById('game-board');
@@ -162,23 +163,57 @@ function spawnObstacle() {
     let pos = board.offsetWidth;
     let move = setInterval(() => {
         if (!gameActive) { clearInterval(move); obs.remove(); return; }
-        pos -= (7 + (score/150)); // Scaling lebih lambat
+        
+        // Kecepatan gerak rintangan
+        pos -= (6 + (score/200)); 
         obs.style.left = pos + 'px';
 
         const player = document.getElementById('player');
-        let pBottom = parseInt(window.getComputedStyle(player).getPropertyValue("bottom"));
-        
-        if (pos < 90 && pos > 40 && pBottom < 50) {
-            gameOver("Kena Api!");
+        // Ambil posisi realtime dengan getBoundingClientRect untuk akurasi tinggi
+        const pRect = player.getBoundingClientRect();
+        const oRect = obs.getBoundingClientRect();
+
+        // LOGIKA HITBOX (Dikecilkan 15px agar tidak gampang mati)
+        const isColliding = (
+            pRect.right - 15 > oRect.left + 15 && 
+            pRect.left + 15 < oRect.right - 15 && 
+            pRect.bottom - 5 > oRect.top + 5
+        );
+
+        if (isColliding) {
+            gameOver("Waduh, TuyOul-mu kepanasan kena api!");
             clearInterval(move);
+            obs.remove();
         } else if (pos < -50) {
-            score += 25; // 25 poin per rintangan
+            score += 25;
             document.getElementById('score').innerText = "Skor: " + score;
             if(score >= 1000) showWin();
-            clearInterval(move); obs.remove();
+            clearInterval(move);
+            obs.remove();
         }
-    }, 20);
-    gameLoop = setTimeout(spawnObstacle, Math.max(600, 1200 - (score/2)));
+    }, 16); // 16ms = 60fps, lebih halus dari 20ms
+    
+    // Jarak antar api (Makin tinggi skor, makin sering muncul tapi ada batas minimal)
+    let nextSpawn = Math.max(700, 1500 - (score/2));
+    gameLoop = setTimeout(spawnObstacle, nextSpawn);
+}
+
+// --- JUMP YANG LEBIH RESPONSIF ---
+function doJump() {
+    if (!gameActive) return;
+    const p = document.getElementById('player');
+    
+    if (selectedMode === 'runner') {
+        if (!p.classList.contains("jump-animation")) {
+            p.classList.add("jump-animation");
+            // Durasi animasi di CSS harus pas (misal 0.5s)
+            setTimeout(() => p.classList.remove("jump-animation"), 500);
+        }
+    } else if (selectedMode === 'flappy') {
+        // Buat flappy lebih ringan
+        let currentTop = parseInt(p.style.top) || 200;
+        p.style.top = (currentTop - 65) + 'px';
+    }
 }
 
 function startFlappyLogic() {
