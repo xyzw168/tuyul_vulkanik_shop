@@ -160,13 +160,15 @@
 
 <section id="game-section" class="game-container">
     <div class="container">
-        <h2>🎮 VULKANIK ARCADE</h2>
+<h2>🎮 TUYooUL GAMES 🎮</h2>
         
         <div id="game-menu" class="game-menu">
             <p>Pilih Tantanganmu untuk Diskon 50%:</p>
-            <div class="menu-buttons">
+            <div class="menu-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <button onclick="selectGame('coin')" class="btn btn-primary">💰 KOIN TUYooUL</button>
                 <button onclick="selectGame('runner')" class="btn btn-primary">🏃 TUYooUL RUNNER</button>
+                <button onclick="selectGame('flappy')" class="btn btn-primary">🦇 TUYooUL FLAPPY</button>
+                <button onclick="startQuiz()" class="btn btn-shopee">🧠 TUYooUL QUIZ</button>
             </div>
         </div>
 
@@ -180,6 +182,25 @@
                     <button onclick="applyDiscount()" class="btn btn-primary">KLAIM 50%</button>
                 </div>
             </div>
+            
+            <div class="game-controls" style="text-align:center; margin-top:15px;">
+                <button id="start-btn" onclick="startAction()" class="btn btn-primary">MULAI</button>
+                <button onclick="backToMenu()" class="btn btn-secondary">GANTI GAME</button>
+            </div>
+        </div>
+
+        <div id="quiz-window" style="display:none;">
+            <div id="quiz-container" style="max-width: 600px; margin: 0 auto; background: #1a1a1a; padding: 30px; border-radius: 20px; border: 3px solid #ff5722;">
+                <div id="quiz-header">
+                    <span style="color: #ffcc00; font-weight: bold;">TUYooUL LOGIC</span>
+                    <hr style="border: 1px solid #333; margin: 15px 0;">
+                </div>
+                <h3 id="quiz-question" style="margin-bottom: 20px; line-height: 1.5;">Memuat soal...</h3>
+                <div id="quiz-options" style="display: flex; flex-direction: column; gap: 10px;">
+                    </div>
+                <button onclick="backToMenu()" class="btn btn-secondary" style="margin-top: 20px; width: 100%;">MENYERAH</button>
+            </div>
+        </div>
             
             <div class="game-controls">
                 <button onclick="startAction()" class="btn btn-primary" id="start-btn">MULAI</button>
