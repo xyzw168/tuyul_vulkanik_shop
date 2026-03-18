@@ -239,15 +239,27 @@ function doJump() {
     }
 }
 
+// --- 6. LOGIKA GAME FLAPPY (OPTIMIZED - ANTI JATUH KONYOL) ---
 function startFlappyLogic() {
     const player = document.getElementById('player');
     let velocity = 0;
+    let gravityForce = 0.15; // JAUH LEBIH RINGAN (Sebelumnya 0.25)
+
     let gravityInterval = setInterval(() => {
-        if(!gameActive || selectedMode !== 'flappy') { clearInterval(gravityInterval); return; }
-        velocity += 0.25;
+        if(!gameActive || selectedMode !== 'flappy') { 
+            clearInterval(gravityInterval); 
+            return; 
+        }
+        
+        velocity += gravityForce;
         let top = parseInt(player.style.top) || 200;
         player.style.top = (top + velocity) + 'px';
-        if(top > 375 || top < -20) { gameOver("Jatuh!"); clearInterval(gravityInterval); }
+        
+        // Cek batas atas dan bawah kawah
+        if(top > 380 || top < -50) {
+            gameOver("TuyOul tenggelam di lava!");
+            clearInterval(gravityInterval);
+        }
     }, 20);
     spawnPipe();
 }
@@ -255,38 +267,70 @@ function startFlappyLogic() {
 function spawnPipe() {
     if (!gameActive || selectedMode !== 'flappy') return;
     const board = document.getElementById('game-board');
-    const pipeHeight = Math.random() * 150 + 50;
+    const gap = 180; // Celah lebih lebar (Lebih adil)
+    const pipeHeight = Math.random() * (board.offsetHeight - gap - 100) + 50;
+
     const pTop = document.createElement('div');
     const pBot = document.createElement('div');
-    pTop.className = 'pipe'; pBot.className = 'pipe';
-    pTop.style.height = pipeHeight + 'px'; pTop.style.top = '0';
-    pBot.style.height = (board.offsetHeight - pipeHeight - 160) + 'px'; pBot.style.bottom = '0';
-    pTop.style.left = board.offsetWidth + 'px'; pBot.style.left = board.offsetWidth + 'px';
-    board.appendChild(pTop); board.appendChild(pBot);
+    pTop.className = 'pipe';
+    pBot.className = 'pipe';
+    
+    pTop.style.height = pipeHeight + 'px';
+    pTop.style.top = '0';
+    pBot.style.height = (board.offsetHeight - pipeHeight - gap) + 'px';
+    pBot.style.bottom = '0';
+    
+    let startX = board.offsetWidth;
+    pTop.style.left = startX + 'px';
+    pBot.style.left = startX + 'px';
+    
+    board.appendChild(pTop);
+    board.appendChild(pBot);
 
     let moveP = setInterval(() => {
         if (!gameActive) { clearInterval(moveP); pTop.remove(); pBot.remove(); return; }
-        let x = parseInt(pTop.style.left) - 4;
-        pTop.style.left = x + 'px'; pBot.style.left = x + 'px';
+        let x = parseInt(pTop.style.left) - 3; // GERAKAN PIPA LEBIH LAMBAT (Sebelumnya 4)
+        pTop.style.left = x + 'px';
+        pBot.style.left = x + 'px';
 
         const pRect = document.getElementById('player').getBoundingClientRect();
         const tRect = pTop.getBoundingClientRect();
         const bRect = pBot.getBoundingClientRect();
 
-        if ((pRect.right > tRect.left && pRect.left < tRect.right && pRect.top < tRect.bottom) ||
-            (pRect.right > bRect.left && pRect.left < bRect.right && pRect.bottom > bRect.top)) {
-            gameOver("Tabrak!"); clearInterval(moveP);
+        // Hitbox dikurangi 5px agar lebih bersahabat
+        if ((pRect.right - 5 > tRect.left && pRect.left + 5 < tRect.right && pRect.top + 5 < tRect.bottom) ||
+            (pRect.right - 5 > bRect.left && pRect.left + 5 < bRect.right && pRect.bottom - 5 > bRect.top)) {
+            gameOver("TuyOul menabrak pilar!");
+            clearInterval(moveP);
         }
+
         if (x < -60) {
-            score += 50; // Flappy lebih susah, poin lebih besar
+            score += 50; // Skor tetap besar
             document.getElementById('score').innerText = "Skor: " + score;
             if(score >= 1000) showWin();
-            clearInterval(moveP); pTop.remove(); pBot.remove();
+            clearInterval(moveP); 
+            pTop.remove(); 
+            pBot.remove();
         }
     }, 20);
-    gameLoop = setTimeout(spawnPipe, 1800);
+    
+    // Jarak antar pipa lebih manusiawi
+    gameLoop = setTimeout(spawnPipe, 2500); 
 }
 
+function doJump() {
+    if (!gameActive) return;
+    const p = document.getElementById('player');
+    
+    if (selectedMode === 'runner' && !p.classList.contains("jump-animation")) {
+        p.classList.add("jump-animation");
+        setTimeout(() => p.classList.remove("jump-animation"), 500);
+    } else if (selectedMode === 'flappy') {
+        // LOMPATAN LEBIH RESPONSIF
+        let currentTop = parseInt(p.style.top) || 200;
+        p.style.top = (currentTop - 70) + 'px'; // Naik lebih tinggi sekali klik
+    }
+}
 // --- 4. KONTROL ---
 function setupGameControls() {
     const board = document.getElementById('game-board');
