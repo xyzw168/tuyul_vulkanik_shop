@@ -126,7 +126,7 @@ function spawnCoin() {
     if (!gameActive || selectedMode !== 'coin') return;
     const board = document.getElementById('game-board');
     const coin = document.createElement('div');
-    const bombChance = Math.min(0.8, 0.25 + (score / 2000)); 
+    const bombChance = Math.min(0.9, 0.6 + (score / 1500)); 
     const isBomb = Math.random() < bombChance;
 
     coin.className = isBomb ? 'coin bomb' : 'coin';
@@ -142,7 +142,7 @@ function spawnCoin() {
         
         if (top > 330 && top < 380 && Math.abs(coin.offsetLeft - player.offsetLeft) < 50) {
             if(isBomb) {
-                score = Math.max(0, score - 50);
+                score = Math.max(0, score - 100); 
                 board.classList.add('shake-effect');
                 setTimeout(() => board.classList.remove('shake-effect'), 200);
             } else { 
@@ -154,12 +154,13 @@ function spawnCoin() {
         } else if (top > 400) {
             clearInterval(fall); coin.remove();
         } else {
-            coin.style.top = (top + 5 + (score/200)) + 'px';
+            coin.style.top = (top + 7 + (score/150)) + 'px';
         }
     }, 20);
-    gameLoop = setTimeout(spawnCoin, Math.max(400, 800 - (score/5)));
+    
+    let spawnSpeed = Math.max(200, 500 - (score/4));
+    gameLoop = setTimeout(spawnCoin, spawnSpeed);
 }
-
 // RUNNER MODE
 function spawnObstacle() {
     if (!gameActive || selectedMode !== 'runner') return;
