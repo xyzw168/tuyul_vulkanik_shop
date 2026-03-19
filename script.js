@@ -38,11 +38,11 @@ function loadQuestion(index) {
     if (index >= quizData.length) {
         alert("📊 KUIS SELESAI!\nTotal Skor: " + quizScore + " / 100");
         if (quizScore >= 90) {
-            alert("🔥 GOKIL! Kamu emang TuyOul Jenius. Diskon 50% Aktif!");
+            alert("🔥 GOKIL! Kamu emang TuyOul Jenius Duta MBG. Diskon 50% Aktif!");
             applyDiscount();
             showWin();
         } else {
-            alert("Skor kamu " + quizScore + ". Belum tembus target 90. Coba lagi!");
+            alert("Skor kamu " + quizScore + ". Belum tembus target 90. Coba lagi! Tetap semangat MBG!");
             backToMenu();
         }
         return;
@@ -62,9 +62,9 @@ function loadQuestion(index) {
         btn.onclick = () => {
             if (i === data.correct) {
                 quizScore += 10;
-                alert("✅ MANTAP! Jawabanmu benar.");
+                alert("✅ MANTAP! jawaban kamu benar. MBGMBGMBG");
             } else {
-                alert("❌ SALAH!");
+                alert("❌ SALAH! MBGMBGMBG");
             }
             loadQuestion(index + 1);
         };
@@ -126,7 +126,9 @@ function spawnCoin() {
     if (!gameActive || selectedMode !== 'coin') return;
     const board = document.getElementById('game-board');
     const coin = document.createElement('div');
-    const isBomb = Math.random() < 0.25;
+    const bombChance = Math.min(0.8, 0.25 + (score / 2000)); 
+    const isBomb = Math.random() < bombChance;
+
     coin.className = isBomb ? 'coin bomb' : 'coin';
     coin.innerHTML = isBomb ? '💣' : '💰';
     coin.style.left = Math.random() * (board.offsetWidth - 40) + 'px';
@@ -137,17 +139,23 @@ function spawnCoin() {
         if (!gameActive) { clearInterval(fall); coin.remove(); return; }
         let top = parseInt(coin.style.top);
         const player = document.getElementById('player');
+        
         if (top > 330 && top < 380 && Math.abs(coin.offsetLeft - player.offsetLeft) < 50) {
             if(isBomb) {
                 score = Math.max(0, score - 50);
                 board.classList.add('shake-effect');
                 setTimeout(() => board.classList.remove('shake-effect'), 200);
-            } else { score += 20; }
+            } else { 
+                score += 20; 
+            }
             document.getElementById('score').innerText = "Skor: " + score;
             if(score >= 1000) showWin();
             clearInterval(fall); coin.remove();
-        } else if (top > 400) { clearInterval(fall); coin.remove(); }
-        else { coin.style.top = (top + 5 + (score/200)) + 'px'; }
+        } else if (top > 400) {
+            clearInterval(fall); coin.remove();
+        } else {
+            coin.style.top = (top + 5 + (score/200)) + 'px';
+        }
     }, 20);
     gameLoop = setTimeout(spawnCoin, Math.max(400, 800 - (score/5)));
 }
@@ -170,7 +178,7 @@ function spawnObstacle() {
         const oRect = obs.getBoundingClientRect();
 
         if (pRect.right - 15 > oRect.left + 15 && pRect.left + 15 < oRect.right - 15 && pRect.bottom - 5 > oRect.top + 5) {
-            gameOver("Kena Api!"); clearInterval(move);
+            gameOver("yahh tuyOOul kamu hangus kena api! MBGMBGMBG"); clearInterval(move);
         } else if (pos < -50) {
             score += 25;
             document.getElementById('score').innerText = "Skor: " + score;
@@ -196,7 +204,7 @@ function startFlappyLogic() {
         player.style.top = newTop + 'px';
         
         if(newTop > 380 || newTop < -50) {
-            gameOver("TuyOul Jatuh!"); clearInterval(gravityInterval);
+            gameOver("tuyOOul kamu jatuh! lanjut terus sebelum dikejar sawit wit wit!"); clearInterval(gravityInterval);
         }
     }, 20);
     spawnPipe();
@@ -267,7 +275,6 @@ function doJump() {
             setTimeout(() => p.classList.remove("jump-animation"), 500);
         }
     } else if (selectedMode === 'flappy') {
-        // RESET VELOCITY SAAT JUMP (Ini kuncinya!)
         flappyVelocity = -6; 
     }
 }
@@ -306,7 +313,7 @@ function setupWhatsAppOrdering() {
             if(!card) return;
             const title = card.querySelector('.product-title').innerText;
             const price = card.querySelector('.new-price')?.innerText || card.querySelector('.display-price').innerText;
-            const text = encodeURIComponent(`Order TuyOul Vulkanik\nProduk: ${title}\nHarga: ${price}`);
+            const text = encodeURIComponent(`Order TuyOOul Vulkanik\nProduk: ${title}\nHarga: ${price}`);
             window.open(`https://wa.me/6281804554719?text=${text}`, '_blank');
         }
     });
