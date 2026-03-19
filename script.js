@@ -148,6 +148,7 @@ let fall = setInterval(() => {
             setTimeout(() => board.classList.remove('shake-effect'), 200);
         } else { 
             score += 20; 
+            playMBGSound();
         }
                 document.getElementById('score').innerText = "Skor: " + score;
                 if(score >= 1000 && !isDiscountApplied) {
@@ -202,6 +203,7 @@ function spawnObstacle() {
         } 
         else if (pos < -50) {
             score += 25;
+            playMBGSound();
             document.getElementById('score').innerText = "Skor: " + score;
                         if(score >= 1000 && !isDiscountApplied) {
                 showWin(); 
@@ -272,6 +274,7 @@ let moveP = setInterval(() => {
         }
         if (x < -60) {
             score += 50;
+            playMBGSound();
             document.getElementById('score').innerText = "Skor: " + score;
               if(score >= 1000 && !isDiscountApplied) {
                 showWin(); 
@@ -371,5 +374,30 @@ function highlightActiveProductCards() {
     document.querySelectorAll('.product-card').forEach(c => {
         c.onmouseenter = () => c.style.borderColor = '#ff5722';
         c.onmouseleave = () => c.style.borderColor = '#333';
+    });
+}
+
+//SOUND
+function playMBGSound() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [150, 100, 80];
+    
+    notes.forEach((freq, i) => {
+        setTimeout(() => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+    
+            osc.type = 'sawtooth'; 
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }, i * 150);
     });
 }
