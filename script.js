@@ -406,3 +406,23 @@ function playMBGSound() {
 function closeWinPopup() {
     document.getElementById('voucher-popup').style.display = 'none';
 }
+
+//best score
+function updateHighScore() {
+    let currentMode = currentGameMode; 
+    let highScore = localStorage.getItem('highScore_' + currentMode) || 0;
+
+    if (score > highScore) {
+        localStorage.setItem('highScore_' + currentMode, score);
+        alert("🔥 REKOR BARU! Skor " + score + " tersimpan!");
+    }
+    showBestScore();
+}
+
+function showBestScore() {
+    let currentMode = currentGameMode || 'coin';
+    let highScore = localStorage.getItem('highScore_' + currentMode) || 0;
+    document.getElementById('best-score').innerText = highScore;
+}
+
+window.onload = showBestScore;
